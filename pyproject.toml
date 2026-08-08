@@ -14,6 +14,7 @@ authors = [
 dependencies = [
     "python-dotenv==1.0.1",
     "tqdm",
+    "pydantic",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -26,6 +27,7 @@ agents = [
 ]
 crewai = [
     "crewai",
+    "fastapi",
 ]
 langgraph = [
 ]
