@@ -1,12 +1,12 @@
 import os, sys
 
-from pylml.agentic import HackuityAgent, RAGAgent
+from pylai.crewai import OrchestratorAgent, RAGAgent
 
 # This is a test file. Run it with pyyel as an installed package.
 
 for cls in [
     RAGAgent,
-    HackuityAgent,
+    OrchestratorAgent,
 ]:
     try:
         cls()
