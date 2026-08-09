@@ -22,16 +22,13 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-all = ["pylai[agentic,api]"]
+all = ["pylai[agentic,langgraph]"]
 agentic = [
     "crewai",
     "fastapi",
     "pylcloud[database] @ https://github.com/PyYel/pylcloud/archive/refs/heads/main.tar.gz",
 ]
 langgraph = [
-]
-api = [
-    "pylcloud[database,gpt] @ https://github.com/PyYel/pylcloud/archive/refs/heads/main.tar.gz",
 ]
 
 
