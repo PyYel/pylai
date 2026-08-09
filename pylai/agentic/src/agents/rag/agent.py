@@ -3,7 +3,6 @@ from crewai import Agent
 from crewai.mcp import MCPServerHTTP
 
 from tools.rag.tools import RAGSearchTool, RAGIngestTool
-from tools.rag.interface import VectorDBInterface
 
 
 class RAGAgent(Agent):

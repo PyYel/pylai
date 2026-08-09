@@ -1,6 +1,6 @@
 import os, sys
 
-from pylai.crewai import OrchestratorAgent, RAGAgent, GraphAgent
+from pylai.agentic import OrchestratorAgent, RAGAgent, GraphAgent
 
 # This is a test file. Run it with pyyel as an installed package.
 

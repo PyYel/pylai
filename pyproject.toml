@@ -22,10 +22,8 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-all = ["pyldl[agents,crewai]"]
-agents = [
-]
-crewai = [
+all = ["pylai[agentic,api]"]
+agentic = [
     "crewai",
     "fastapi",
     "pylcloud[database] @ https://github.com/PyYel/pylcloud/archive/refs/heads/main.tar.gz",
