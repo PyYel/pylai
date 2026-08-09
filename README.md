@@ -22,3 +22,12 @@
 The PyYel AI Operations extension. This repository focuses on AI software engineering and logic.
 
 
+## Install
+
+```bash
+# requirements.txt / pyproject.toml
+pylai[all] @ https://github.com/PyYel/pylai/archive/refs/heads/main.tar.gz
+
+# bat
+pip install "pylai[all] @ https://github.com/PyYel/pylai/archive/refs/heads/main.tar.gz"
+```
