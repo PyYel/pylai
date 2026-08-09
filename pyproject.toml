@@ -7,7 +7,7 @@ name = "pylai"
 version = "0.0.1"
 description = "AI software engineering library"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.10"
 authors = [
     { name="Maxime BLIDI", email="blidi.maxime@gmail.com" }
 ]
@@ -24,7 +24,7 @@ classifiers = [
 [project.optional-dependencies]
 all = ["pylai[agentic,langgraph]"]
 agentic = [
-    "crewai",
+    "pydantic-ai-slim[openai,mcp]",
     "pylcloud[database] @ https://github.com/PyYel/pylcloud/archive/refs/heads/main.tar.gz",
 ]
 langgraph = [

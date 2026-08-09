@@ -1,5 +1,5 @@
 tqdm
-crewai
+pydantic-ai-slim[openai,mcp]
 python-dotenv
 
 # api demo, not a lib module

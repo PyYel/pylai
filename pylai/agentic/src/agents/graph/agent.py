@@ -1,47 +1,50 @@
-from typing import Any
-from crewai import Agent
-from crewai.mcp import MCPServerHTTP
+from typing import Any, Sequence
 
-from tools.graph.tools import GraphQueryTool, GraphGetNeighborsTool
-from pylcloud.database import DatabaseGraphLocal
+from pydantic_ai import Agent
+from pydantic_ai.models import KnownModelName, Model
+
+from pylcloud.database.src.graph.DatabaseGraph import DatabaseGraph
+
+from .._instructions import build_mcp_toolsets, role_instructions
+from ...tools.graph.tools import build_graph_neighbors_tool, build_graph_query_tool
 
 
 class GraphAgent(Agent):
-    """Overload a CrewAI agent with both custom tools and MCP Server capabilities"""
+    """
+    Ready-to-use knowledge-graph agent: connect an already-connected pylcloud
+    graph database, get a working graph-browsing agent.
+    """
+
+    DEFAULT_ROLE = "Graph browsing agent"
+    DEFAULT_GOAL = "Find matching entities and relationships from a knowledge graph."
+    DEFAULT_BACKSTORY = "An expert at traversing and explaining knowledge-graph structure."
 
     def __init__(
         self,
-        db_host: str,
-        db_user: str,
-        db_password: str,
-        mcp_urls: list[str] = [],
-        mcp_tokens: list[str] = [],
-        **kwargs: Any,
+        db_client: DatabaseGraph,
+        *,
+        model: Model | KnownModelName | str,
+        mcp_urls: Sequence[str] = (),
+        mcp_tokens: Sequence[str] = (),
+        role: str = DEFAULT_ROLE,
+        goal: str = DEFAULT_GOAL,
+        backstory: str = DEFAULT_BACKSTORY,
+        **agent_kwargs: Any,
     ) -> None:
+        self.client = db_client
 
-        self.client = DatabaseGraphLocal(host=db_host)
-        self.client.connect_database(host=db_host)
-
-        # Custom internal tools
         tools = [
-            GraphQueryTool(graph_db_interface=self.client),
-            GraphGetNeighborsTool(graph_db_interface=self.client),
+            build_graph_query_tool(db_client),
+            build_graph_neighbors_tool(db_client),
         ]
-
-        mcps = []
-        for mcp_url, mcp_token in zip(mcp_urls, mcp_tokens):
-            graph_mcp = MCPServerHTTP(
-                url=mcp_url,
-                headers={"Authorization": f"Bearer {mcp_token}"},
-                cache_tools_list=True,  # Optimization to prevent polling the server every single turn
-            )
-            mcps.append(graph_mcp)
+        toolsets = build_mcp_toolsets(mcp_urls, mcp_tokens)
 
         super().__init__(
-            role="Graph browsing agent",
-            goal="Find matching entities and relationships from a knowledge graph.",
-            backstory="An expert of <topic>",
+            model=model,
+            name="graph_agent",
+            description=goal,
+            instructions=role_instructions(role, goal, backstory),
             tools=tools,
-            mcps=mcps,
-            **kwargs,
+            toolsets=toolsets or None,
+            **agent_kwargs,
         )

@@ -1,47 +1,57 @@
-from typing import Any
-from crewai import Agent
-from crewai.mcp import MCPServerHTTP
+from typing import Any, Sequence
 
-from tools.rag.tools import RAGSearchTool, RAGIngestTool
+from pydantic_ai import Agent
+from pydantic_ai.models import KnownModelName, Model
+
+from pylcloud.database.src.search.DatabaseSearch import DatabaseSearch
+from pylcloud.gpt.src.GPT import GPT
+
+from .._instructions import build_mcp_toolsets, role_instructions
+from ...tools.rag.tools import build_rag_ingest_tool, build_rag_search_tool
 
 
 class RAGAgent(Agent):
-    """Overload a CrewAI agent with both custom tools and MCP Server capabilities"""
+    """
+    Ready-to-use RAG agent: connect a pylcloud vector store + embedder, get a
+    working knowledge-base agent. Both must already be constructed and connected
+    by the caller — RAGAgent does not assume which search backend
+    (Elasticsearch/Opensearch/S3Vector) or embedding provider you're using.
+    """
+
+    DEFAULT_ROLE = "RAG browsing agent"
+    DEFAULT_GOAL = "Find matching sources from a knowledge base and answer questions grounded in them."
+    DEFAULT_BACKSTORY = "An expert at retrieving and synthesizing knowledge-base content."
 
     def __init__(
         self,
-        db_host: str,
-        db_user: str,
-        db_password: str,
-        mcp_urls: list[str] = [],
-        mcp_tokens: list[str] = [],
-        **kwargs: Any,
+        db_client: DatabaseSearch,
+        embedder: GPT,
+        *,
+        index_name: str,
+        embedding_model_name: str,
+        model: Model | KnownModelName | str,
+        mcp_urls: Sequence[str] = (),
+        mcp_tokens: Sequence[str] = (),
+        role: str = DEFAULT_ROLE,
+        goal: str = DEFAULT_GOAL,
+        backstory: str = DEFAULT_BACKSTORY,
+        **agent_kwargs: Any,
     ) -> None:
+        self.client = db_client
+        self.embedder = embedder
 
-        self.client = VectorDBInterface(
-            db_host=db_host, db_user=db_user, db_password=db_password
-        )
-
-        # Custom internal tools
         tools = [
-            RAGSearchTool(vector_db_interface=self.client),
-            RAGIngestTool(vector_db_interface=self.client),
+            build_rag_search_tool(db_client, embedder, embedding_model_name, index_name),
+            build_rag_ingest_tool(db_client, embedder, embedding_model_name, index_name),
         ]
-
-        mcps = []
-        for mcp_url, mcp_token in zip(mcp_urls, mcp_tokens):
-            rag_mcp = MCPServerHTTP(
-                url=mcp_url,
-                headers={"Authorization": f"Bearer {mcp_token}"},
-                cache_tools_list=True,  # Optimization to prevent polling the server every single turn
-            )
-            mcps.append(rag_mcp)
+        toolsets = build_mcp_toolsets(mcp_urls, mcp_tokens)
 
         super().__init__(
-            role="RAG browsing agent",
-            goal="Find matching sources from a knowledge base.",
-            backstory="An expert of <topic>",
+            model=model,
+            name="rag_agent",
+            description=goal,
+            instructions=role_instructions(role, goal, backstory),
             tools=tools,
-            mcps=mcps,
-            **kwargs,
+            toolsets=toolsets or None,
+            **agent_kwargs,
         )
