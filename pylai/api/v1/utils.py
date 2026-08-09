@@ -3,7 +3,14 @@ from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from pycloud.database import DatabaseRelationalPostgreSQL
-from constants import POSTGRES_DATABASE, POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_USER, POSTGRES_SCHEMA, POSTGRES_PORT
+from constants import (
+    POSTGRES_DATABASE,
+    POSTGRES_HOST,
+    POSTGRES_PASSWORD,
+    POSTGRES_USER,
+    POSTGRES_SCHEMA,
+    POSTGRES_PORT,
+)
 
 api_db = DatabaseRelationalPostgreSQL(
     host=POSTGRES_HOST,
@@ -16,6 +23,7 @@ api_db = DatabaseRelationalPostgreSQL(
 
 security = HTTPBearer()
 
+
 async def verify_session_token(
     credentials: HTTPAuthorizationCredentials = Security(security),
 ) -> str:
@@ -25,17 +33,17 @@ async def verify_session_token(
     """
 
     try:
-            
+
         token = credentials.credentials
         if not token:
             raise HTTPException(status_code=401, detail="Missing token")
-        
+
         # Checks the better auth managed session table
         session_record = api_db.query_data(
-            SELECT="user_id", # TODO: upgrade with expire_at check as well ?
+            SELECT="user_id",  # TODO: upgrade with expire_at check as well ?
             FROM="session",
             WHERE="token",
-            VALUES=token
+            VALUES=token,
         )
 
         if not session_record:
@@ -46,4 +54,3 @@ async def verify_session_token(
     except Exception as e:
         print(f"verify_session_token error: {e}")
         raise HTTPException(status_code=500, detail="Auth failed")
-

@@ -15,6 +15,7 @@ class User(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+
 class Conversations(BaseModel):
     id: Union[str, UUID]
     name: str
@@ -23,6 +24,7 @@ class Conversations(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+
 class Messages(BaseModel):
     id: Union[str, UUID]
     conversation_id: Union[str, UUID]
@@ -30,6 +32,7 @@ class Messages(BaseModel):
     role: Literal["user", "assistant", "agent"]
     created_at: datetime
     updated_at: datetime
+
 
 class ApiKey(BaseModel):
     id: Union[str, UUID]

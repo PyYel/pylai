@@ -51,5 +51,3 @@ POSTGRES_PORT = os.getenv("POSTGRES_PORT", "missing_var")
 SLM_MODEL_NAME = os.getenv("SLM_MODEL_NAME", "missing_var")
 LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "missing_var")
 EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "missing_var")
-
-
