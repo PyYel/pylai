@@ -2,11 +2,11 @@ from typing import Any
 from crewai import Agent
 from crewai.mcp import MCPServerHTTP
 
-from tools.rag.tools import RAGSearchTool, RAGIngestTool
-from tools.rag.interface import VectorDBInterface
+from tools.graph.tools import GraphQueryTool, GraphGetNeighborsTool
+from pylcloud.database import DatabaseGraphLocal
 
 
-class RAGAgent(Agent):
+class GraphAgent(Agent):
     """Overload a CrewAI agent with both custom tools and MCP Server capabilities"""
 
     def __init__(
@@ -19,28 +19,27 @@ class RAGAgent(Agent):
         **kwargs: Any,
     ) -> None:
 
-        self.client = VectorDBInterface(
-            db_host=db_host, db_user=db_user, db_password=db_password
-        )
+        self.client = DatabaseGraphLocal(host=db_host)
+        self.client.connect_database(host=db_host)
 
         # Custom internal tools
         tools = [
-            RAGSearchTool(vector_db_interface=self.client),
-            RAGIngestTool(vector_db_interface=self.client),
+            GraphQueryTool(graph_db_interface=self.client),
+            GraphGetNeighborsTool(graph_db_interface=self.client),
         ]
 
         mcps = []
         for mcp_url, mcp_token in zip(mcp_urls, mcp_tokens):
-            rag_mcp = MCPServerHTTP(
+            graph_mcp = MCPServerHTTP(
                 url=mcp_url,
                 headers={"Authorization": f"Bearer {mcp_token}"},
                 cache_tools_list=True,  # Optimization to prevent polling the server every single turn
             )
-            mcps.append(rag_mcp)
+            mcps.append(graph_mcp)
 
         super().__init__(
-            role="RAG browsing agent",
-            goal="Find matching sources from a knowledge base.",
+            role="Graph browsing agent",
+            goal="Find matching entities and relationships from a knowledge graph.",
             backstory="An expert of <topic>",
             tools=tools,
             mcps=mcps,

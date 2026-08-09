@@ -28,6 +28,8 @@ class OrchestratorAgent(Agent):
                 "1. If this is casual conversation or a general question, answer directly.\n"
                 "2. If the query requires specific data. "
                 "delegate a task to your coworkers.\n"
+                "3. Feel free to ask the user more details, or any additionnal input when deemed necessary, before"
+                "using tools or asking coworkers."
             ),
             expected_output="A helpful, conversational response addressing the user's query.",
             agent=self,

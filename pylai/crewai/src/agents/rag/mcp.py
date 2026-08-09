@@ -19,6 +19,7 @@ load_dotenv(
 MCP_TOKEN = os.getenv("MCP_TOKEN", "")
 MCP_HOST = os.getenv("MCP_HOST", "")
 
+
 async def fetch_tools():
     headers = {
         "Authorization": f"Bearer {MCP_TOKEN}",

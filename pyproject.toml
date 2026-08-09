@@ -12,7 +12,7 @@ authors = [
     { name="Maxime BLIDI", email="blidi.maxime@gmail.com" }
 ]
 dependencies = [
-    "python-dotenv==1.0.1",
+    "python-dotenv>=1.0.0",
     "tqdm",
     "pydantic",
 ]
@@ -28,11 +28,12 @@ agents = [
 crewai = [
     "crewai",
     "fastapi",
+    "pylcloud[database] @ https://github.com/PyYel/pylcloud/archive/refs/heads/main.tar.gz",
 ]
 langgraph = [
 ]
 api = [
-    "pylcloud[database,gpt] @ https://github.com/PyYel/PyYel-CloudOps/archive/refs/heads/main.tar.gz",
+    "pylcloud[database,gpt] @ https://github.com/PyYel/pylcloud/archive/refs/heads/main.tar.gz",
 ]
 
 
