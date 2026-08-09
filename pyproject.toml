@@ -24,7 +24,7 @@ classifiers = [
 [project.optional-dependencies]
 all = ["pylai[agentic,langgraph]"]
 agentic = [
-    "crewai<1.10",
+    "crewai",
     "pylcloud[database] @ https://github.com/PyYel/pylcloud/archive/refs/heads/main.tar.gz",
 ]
 langgraph = [
