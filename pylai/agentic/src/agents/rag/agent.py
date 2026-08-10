@@ -1,13 +1,12 @@
-from typing import Any, Sequence
+from typing import Any, Optional, Sequence, Union
 
-from pydantic_ai import Agent
 from pydantic_ai.models import KnownModelName, Model
 
 from pylcloud.database.src.search.DatabaseSearch import DatabaseSearch
 from pylcloud.gpt.src.GPT import GPT
 
-from .._instructions import build_mcp_toolsets, role_instructions
-from ...tools.rag.tools import build_rag_ingest_tool, build_rag_search_tool
+from ..agent import Agent
+from ...tools.rag.tools import RAGIngestTool, RAGSearchTool
 
 
 class RAGAgent(Agent):
@@ -18,40 +17,62 @@ class RAGAgent(Agent):
     (Elasticsearch/Opensearch/S3Vector) or embedding provider you're using.
     """
 
-    DEFAULT_ROLE = "RAG browsing agent"
-    DEFAULT_GOAL = "Find matching sources from a knowledge base and answer questions grounded in them."
-    DEFAULT_BACKSTORY = "An expert at retrieving and synthesizing knowledge-base content."
+    DEFAULT_INSTRUCTIONS = (
+        "Answer questions using the knowledge base. Search it for chunks relevant "
+        "to the question before answering, and ground your answer in what you "
+        "find rather than guessing. Ingest new content into the knowledge base "
+        "when asked to remember or store something."
+    )
+    DEFAULT_DESCRIPTION = "Finds and answers questions from a knowledge base."
 
     def __init__(
         self,
         db_client: DatabaseSearch,
         embedder: GPT,
-        *,
         index_name: str,
         embedding_model_name: str,
-        model: Model | KnownModelName | str,
+        model: Union[Model, KnownModelName],
+        name: str = "RAGAgent",
         mcp_urls: Sequence[str] = (),
         mcp_tokens: Sequence[str] = (),
-        role: str = DEFAULT_ROLE,
-        goal: str = DEFAULT_GOAL,
-        backstory: str = DEFAULT_BACKSTORY,
+        instructions: Optional[str] = None,
+        description: Optional[str] = None,
         **agent_kwargs: Any,
     ) -> None:
+        """
+        Instanciates a ``RAGAgent``.
+
+        This agent has some ready to use tools to read and browse a vector database,
+        depending on the ``db_client`` type passed. 
+        
+        Parameters
+        ----------
+        model: str
+            The LLM model tied to this agent execution.
+
+        Notes
+        -----
+        This agent and its tools are built upon the database module of the [PyYelCloud](https://github.com/PyYel/pylcloud) library:
+        ```
+        pip install pylcloud[database]
+        ```
+        """
+
         self.client = db_client
         self.embedder = embedder
 
         tools = [
-            build_rag_search_tool(db_client, embedder, embedding_model_name, index_name),
-            build_rag_ingest_tool(db_client, embedder, embedding_model_name, index_name),
+            RAGSearchTool(db_client, embedder, embedding_model_name, index_name),
+            RAGIngestTool(db_client, embedder, embedding_model_name, index_name),
         ]
-        toolsets = build_mcp_toolsets(mcp_urls, mcp_tokens)
 
         super().__init__(
             model=model,
-            name="rag_agent",
-            description=goal,
-            instructions=role_instructions(role, goal, backstory),
+            name=name,
             tools=tools,
-            toolsets=toolsets or None,
+            mcp_urls=mcp_urls,
+            mcp_tokens=mcp_tokens,
+            instructions=instructions,
+            description=description,
             **agent_kwargs,
         )

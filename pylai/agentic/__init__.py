@@ -1,2 +1,2 @@
-from .src.agents import OrchestratorAgent, RAGAgent, GraphAgent
+from .src.agents import Agent, OrchestratorAgent, RAGAgent, GraphAgent
 from .src.tools import *

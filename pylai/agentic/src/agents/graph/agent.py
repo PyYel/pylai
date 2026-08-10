@@ -1,13 +1,12 @@
-from typing import Any, Sequence
+from typing import Any, Optional, Sequence, Union
 
-from pydantic_ai import Agent
 from pydantic_ai.models import KnownModelName, Model
 
 from pylcloud.database.src.graph.DatabaseGraph import DatabaseGraph
 
-from .._instructions import build_mcp_toolsets, role_instructions
-from ...tools.graph.tools import build_graph_neighbors_tool, build_graph_query_tool
-
+from ..agent import Agent
+from ...tools.graph.tools import GraphNeighborsTool, GraphQueryTool
+import numpy
 
 class GraphAgent(Agent):
     """
@@ -15,36 +14,57 @@ class GraphAgent(Agent):
     graph database, get a working graph-browsing agent.
     """
 
-    DEFAULT_ROLE = "Graph browsing agent"
-    DEFAULT_GOAL = "Find matching entities and relationships from a knowledge graph."
-    DEFAULT_BACKSTORY = "An expert at traversing and explaining knowledge-graph structure."
+    DEFAULT_INSTRUCTIONS = (
+        "Answer questions using the knowledge graph. Query it for matching nodes "
+        "and edges before answering. Use node ids to query, but answer the user "
+        "using the entities' actual names/labels when available, and expand a "
+        "node's neighbors when the question is about relationships."
+    )
+    DEFAULT_DESCRIPTION = "Finds and answers questions from a knowledge graph."
 
     def __init__(
         self,
         db_client: DatabaseGraph,
-        *,
-        model: Model | KnownModelName | str,
+        model: Union[Model, KnownModelName],
+        name: str = "GraphAgent",
         mcp_urls: Sequence[str] = (),
         mcp_tokens: Sequence[str] = (),
-        role: str = DEFAULT_ROLE,
-        goal: str = DEFAULT_GOAL,
-        backstory: str = DEFAULT_BACKSTORY,
+        instructions: Optional[str] = None,
+        description: Optional[str] = None,
         **agent_kwargs: Any,
     ) -> None:
+        """
+        Instanciates a ``GraphAgent``.
+
+        This agent has some ready to use tools to read and browse a graph structure or database,
+        depending on the ``db_client`` type passed. 
+        
+        Parameters
+        ----------
+        model: str
+            The LLM model tied to this agent execution.
+
+        Notes
+        -----
+        This agent and its tools are built upon the database module of the [PyYelCloud](https://github.com/PyYel/pylcloud) library:
+        ```
+        pip install pylcloud[database]
+        ```
+        """
         self.client = db_client
 
         tools = [
-            build_graph_query_tool(db_client),
-            build_graph_neighbors_tool(db_client),
+            GraphQueryTool(db_client),
+            GraphNeighborsTool(db_client),
         ]
-        toolsets = build_mcp_toolsets(mcp_urls, mcp_tokens)
 
         super().__init__(
             model=model,
-            name="graph_agent",
-            description=goal,
-            instructions=role_instructions(role, goal, backstory),
+            name=name,
             tools=tools,
-            toolsets=toolsets or None,
+            mcp_urls=mcp_urls,
+            mcp_tokens=mcp_tokens,
+            instructions=instructions,
+            description=description,
             **agent_kwargs,
         )

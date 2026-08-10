@@ -64,10 +64,10 @@ def test_delegation_end_to_end():
     agent_b = Agent(TestModel(), name="agent_b", description="Leaf agent B", instructions="You are agent B.")
 
     sub_orchestrator = OrchestratorAgent(
-        model=TestModel(), delegates={"agent_a": agent_a, "agent_b": agent_b}
+        model=TestModel(), name="research_team", delegates=[agent_a, agent_b]
     )
     root_orchestrator = OrchestratorAgent(
-        model=TestModel(), delegates={"research_team": sub_orchestrator}
+        model=TestModel(), delegates=[sub_orchestrator]
     )
 
     result = root_orchestrator.run_sync("Gather info from both specialists and summarize.")

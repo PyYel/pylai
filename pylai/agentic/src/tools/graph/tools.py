@@ -1,9 +1,10 @@
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
-from pydantic_ai import Tool
 
 from pylcloud.database.src.graph.DatabaseGraph import DatabaseGraph
+
+from ..tool import Tool
 
 
 class GraphNode(BaseModel):
@@ -37,10 +38,22 @@ class GraphRelationship(BaseModel):
     )
 
 
-def build_graph_query_tool(db_client: DatabaseGraph) -> Tool:
-    """Builds a pydantic-ai Tool that pattern-matches a pylcloud knowledge graph."""
+class GraphQueryTool(Tool):
+    """Pattern-matches a pylcloud knowledge graph."""
 
-    def query_graph_database(
+    NAME = "query_graph_database"
+    DESCRIPTION = (
+        "Runs a pattern-matching query against the knowledge graph (by node id, labels, "
+        "properties, or edge triple) and returns a cleaned, lightweight set of matching "
+        "nodes and edges."
+    )
+
+    def __init__(self, db_client: DatabaseGraph, **tool_kwargs: Any) -> None:
+        self.db_client = db_client
+        super().__init__(**tool_kwargs)
+
+    def __call__(
+        self,
         node_id: Optional[str] = None,
         labels: Optional[List[str]] = None,
         properties: Optional[Dict[str, Any]] = None,
@@ -60,8 +73,8 @@ def build_graph_query_tool(db_client: DatabaseGraph) -> Tool:
             target: Filter edges pointing to this node id.
             limit: Maximum number of matches to return.
         """
-        db_client.logger.info("Querying graph database (node_id=%s)", node_id)
-        result = db_client.query_data(
+        self.db_client.logger.info("Querying graph database (node_id=%s)", node_id)
+        result = self.db_client.query_data(
             node_id=node_id,
             labels=labels,
             properties=properties,
@@ -85,28 +98,25 @@ def build_graph_query_tool(db_client: DatabaseGraph) -> Tool:
         ]
         return {"nodes": nodes, "edges": edges}
 
-    return Tool(
-        query_graph_database,
-        name="query_graph_database",
-        description=(
-            "Runs a pattern-matching query against the knowledge graph (by node id, labels, "
-            "properties, or edge triple) and returns a cleaned, lightweight set of matching "
-            "nodes and edges."
-        ),
-    )
 
+class GraphNeighborsTool(Tool):
+    """Expands a node's direct neighborhood."""
 
-def build_graph_neighbors_tool(db_client: DatabaseGraph) -> Tool:
-    """Builds a pydantic-ai Tool that expands a node's direct neighborhood."""
+    NAME = "get_graph_neighbors"
+    DESCRIPTION = "Retrieves the edges directly incident to a given node, restricted to a lightweight schema."
 
-    def get_graph_neighbors(node_id: str) -> List[Dict[str, Any]]:
+    def __init__(self, db_client: DatabaseGraph, **tool_kwargs: Any) -> None:
+        self.db_client = db_client
+        super().__init__(**tool_kwargs)
+
+    def __call__(self, node_id: str) -> List[Dict[str, Any]]:
         """Retrieves the edges directly incident to a given node.
 
         Args:
             node_id: The unique identifier of the node to expand.
         """
-        db_client.logger.info("Fetching graph neighbors (node_id=%s)", node_id)
-        result = db_client.query_data(node_id=node_id)
+        self.db_client.logger.info("Fetching graph neighbors (node_id=%s)", node_id)
+        result = self.db_client.query_data(node_id=node_id)
         return [
             GraphRelationship(
                 source_id=e["source"],
@@ -116,9 +126,3 @@ def build_graph_neighbors_tool(db_client: DatabaseGraph) -> Tool:
             ).model_dump()
             for e in result["edges"]
         ]
-
-    return Tool(
-        get_graph_neighbors,
-        name="get_graph_neighbors",
-        description="Retrieves the edges directly incident to a given node, restricted to a lightweight schema.",
-    )

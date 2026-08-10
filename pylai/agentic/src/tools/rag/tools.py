@@ -1,10 +1,11 @@
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
-from pydantic_ai import Tool
 
 from pylcloud.database.src.search.DatabaseSearch import DatabaseSearch
 from pylcloud.gpt.src.GPT import GPT
+
+from ..tool import Tool
 
 
 class Document(BaseModel):
@@ -21,36 +22,51 @@ class Document(BaseModel):
     )
 
 
-def build_rag_search_tool(
-    db_client: DatabaseSearch,
-    embedder: GPT,
-    embedding_model_name: str,
-    index_name: str,
-) -> Tool:
+class RAGSearchTool(Tool):
     """
-    Builds a pydantic-ai Tool that semantically searches a pylcloud vector store.
+    Semantically searches a pylcloud vector store.
 
     ``DatabaseSearch.similarity_search`` is the one method whose signature is
     actually consistent across pylcloud's search backends (Elasticsearch,
     Opensearch, S3Vector), so this works with any of them interchangeably.
     """
 
-    def search_knowledge_base(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    NAME = "search_knowledge_base"
+    DESCRIPTION = (
+        "Searches the vector knowledge base for chunks semantically relevant to a "
+        "query, returning a cleaned, lightweight list of matches."
+    )
+
+    def __init__(
+        self,
+        db_client: DatabaseSearch,
+        embedder: GPT,
+        embedding_model_name: str,
+        index_name: str,
+        **tool_kwargs: Any,
+    ) -> None:
+        self.db_client = db_client
+        self.embedder = embedder
+        self.embedding_model_name = embedding_model_name
+        self.index_name = index_name
+        super().__init__(**tool_kwargs)
+
+    def __call__(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """Searches the vector knowledge base for chunks semantically relevant to a query.
 
         Args:
             query: The natural language query to search the knowledge base with.
             top_k: The number of top matching chunks to return.
         """
-        db_client.logger.info(
+        self.db_client.logger.info(
             "Searching knowledge base (query=%s, top_k=%d)", query, top_k
         )
-        embedding = embedder.return_embedding(model_name=embedding_model_name, prompt=query)
+        embedding = self.embedder.return_embedding(model_name=self.embedding_model_name, prompt=query)
         if embedding is None:
             return []
 
-        matches = db_client.similarity_search(
-            index_name=index_name,
+        matches = self.db_client.similarity_search(
+            index_name=self.index_name,
             vector_query=embedding["embedding"],
             k=top_k,
         )
@@ -64,24 +80,10 @@ def build_rag_search_tool(
             for match in matches
         ]
 
-    return Tool(
-        search_knowledge_base,
-        name="search_knowledge_base",
-        description=(
-            "Searches the vector knowledge base for chunks semantically relevant to a "
-            "query, returning a cleaned, lightweight list of matches."
-        ),
-    )
 
-
-def build_rag_ingest_tool(
-    db_client: DatabaseSearch,
-    embedder: GPT,
-    embedding_model_name: str,
-    index_name: str,
-) -> Tool:
+class RAGIngestTool(Tool):
     """
-    Builds a pydantic-ai Tool that embeds and stores raw text chunks.
+    Embeds and stores raw text chunks.
 
     NOTE: unlike ``similarity_search``, pylcloud's ``DatabaseSearch.send_data`` is
     NOT consistently shaped across backends today: ``DatabaseSearchS3Vector`` takes
@@ -94,41 +96,50 @@ def build_rag_ingest_tool(
     suggested fix (aligning pylcloud's ``send_data`` signatures).
     """
 
-    def ingest_knowledge_base_documents(documents: List[str], source: str = "") -> str:
+    NAME = "ingest_knowledge_base_documents"
+    DESCRIPTION = "Embeds and stores raw text chunks into the vector knowledge base for later retrieval."
+
+    def __init__(
+        self,
+        db_client: DatabaseSearch,
+        embedder: GPT,
+        embedding_model_name: str,
+        index_name: str,
+        **tool_kwargs: Any,
+    ) -> None:
+        self.db_client = db_client
+        self.embedder = embedder
+        self.embedding_model_name = embedding_model_name
+        self.index_name = index_name
+        super().__init__(**tool_kwargs)
+
+    def __call__(self, documents: List[str], source: str = "") -> str:
         """Embeds and stores raw text chunks into the vector knowledge base for later retrieval.
 
         Args:
             documents: Raw text chunks to embed and store in the knowledge base.
             source: The origin document or URI shared by all chunks in this batch.
         """
-        db_client.logger.info(
-            "Ingesting %d document chunk(s) into '%s'", len(documents), index_name
+        self.db_client.logger.info(
+            "Ingesting %d document chunk(s) into '%s'", len(documents), self.index_name
         )
         for chunk in documents:
-            embedding = embedder.return_embedding(model_name=embedding_model_name, prompt=chunk)
+            embedding = self.embedder.return_embedding(model_name=self.embedding_model_name, prompt=chunk)
             if embedding is None:
                 continue
-            data_id = db_client._hash_content(chunk, prefixes=[source] if source else [])
+            data_id = self.db_client._hash_content(chunk, prefixes=[source] if source else [])
             try:
-                db_client.send_data(
-                    index_name=index_name,
+                self.db_client.send_data(
+                    index_name=self.index_name,
                     data_id=data_id,
                     vector=embedding["embedding"],
                     metadata={"content": chunk, "source": source},
                 )
             except TypeError as exc:
                 raise TypeError(
-                    f"{type(db_client).__name__}.send_data does not accept the "
+                    f"{type(self.db_client).__name__}.send_data does not accept the "
                     "(index_name, data_id, vector, metadata) signature this tool "
                     "was built for. See the RAG tools migration review."
                 ) from exc
 
         return f"Ingested {len(documents)} document chunk(s)."
-
-    return Tool(
-        ingest_knowledge_base_documents,
-        name="ingest_knowledge_base_documents",
-        description=(
-            "Embeds and stores raw text chunks into the vector knowledge base for later retrieval."
-        ),
-    )
