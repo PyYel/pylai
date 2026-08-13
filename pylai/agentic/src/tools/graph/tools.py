@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from pylcloud.database.src.graph.DatabaseGraph import DatabaseGraph
 
 from ..tool import Tool
-
+from logger import _config_logger
 
 class GraphNode(BaseModel):
     """
@@ -51,6 +51,7 @@ class GraphQueryTool(Tool):
     def __init__(self, db_client: DatabaseGraph, **tool_kwargs: Any) -> None:
         self.db_client = db_client
         super().__init__(**tool_kwargs)
+        self.logger = _config_logger(logs_name="GraphQueryTool")
 
     def __call__(
         self,
@@ -108,6 +109,7 @@ class GraphNeighborsTool(Tool):
     def __init__(self, db_client: DatabaseGraph, **tool_kwargs: Any) -> None:
         self.db_client = db_client
         super().__init__(**tool_kwargs)
+        self.logger = _config_logger(logs_name="GraphNeighborsTool")
 
     def __call__(self, node_id: str) -> List[Dict[str, Any]]:
         """Retrieves the edges directly incident to a given node.

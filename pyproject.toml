@@ -15,7 +15,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "tqdm",
     "pydantic",
-    "pydantic-ai-slim[openai,mcp]"
+    "pydantic-ai-slim[openai,mcp,cli]"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

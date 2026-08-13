@@ -6,7 +6,7 @@ from pylcloud.database.src.search.DatabaseSearch import DatabaseSearch
 from pylcloud.gpt.src.GPT import GPT
 
 from ..tool import Tool
-
+from logger import _config_logger
 
 class Document(BaseModel):
     """
@@ -51,6 +51,9 @@ class RAGSearchTool(Tool):
         self.index_name = index_name
         super().__init__(**tool_kwargs)
 
+        self.logger = _config_logger(logs_name="RAGSearchTool")
+
+
     def __call__(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """Searches the vector knowledge base for chunks semantically relevant to a query.
 
@@ -58,7 +61,7 @@ class RAGSearchTool(Tool):
             query: The natural language query to search the knowledge base with.
             top_k: The number of top matching chunks to return.
         """
-        self.db_client.logger.info(
+        self.logger.info(
             "Searching knowledge base (query=%s, top_k=%d)", query, top_k
         )
         embedding = self.embedder.return_embedding(model_name=self.embedding_model_name, prompt=query)
@@ -112,6 +115,7 @@ class RAGIngestTool(Tool):
         self.embedding_model_name = embedding_model_name
         self.index_name = index_name
         super().__init__(**tool_kwargs)
+        self.logger = _config_logger(logs_name="RAGIngestTool")
 
     def __call__(self, documents: List[str], source: str = "") -> str:
         """Embeds and stores raw text chunks into the vector knowledge base for later retrieval.
@@ -120,7 +124,7 @@ class RAGIngestTool(Tool):
             documents: Raw text chunks to embed and store in the knowledge base.
             source: The origin document or URI shared by all chunks in this batch.
         """
-        self.db_client.logger.info(
+        self.logger.info(
             "Ingesting %d document chunk(s) into '%s'", len(documents), self.index_name
         )
         for chunk in documents:

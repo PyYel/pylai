@@ -10,7 +10,7 @@ from pydantic_ai.models import KnownModelName, Model
 from abc import ABC
 
 from ..tools import Tool
-from ....logger import _config_logger
+from logger import _config_logger
 
 
 class Agent(PydanticAgent, ABC):
@@ -63,6 +63,11 @@ class Agent(PydanticAgent, ABC):
             Extra argument to pass the the agent constructor.
         """
 
+        self.logger = _config_logger(logs_name="Agent")
+
+        self.model_name = model if isinstance(model, str) else model.model_name
+        self.agent_name = name
+
         self.delegates: Dict[str, "PydanticAgent[Any, Any]"] = self._name_delegates(delegates)
         capabilities: List[Any] = []
         if self.delegates:
@@ -72,8 +77,9 @@ class Agent(PydanticAgent, ABC):
                 description=f"Delegates to specialist agents: {', '.join(self.delegates)}.",
             ))
 
+        self.logger.debug(f"Creating instance of agent {self.agent_name} running on model {self.model_name}")
         super().__init__(
-            model,
+            model=model,
             name=name,
             instructions=instructions or self.DEFAULT_INSTRUCTIONS,
             description=description or self.DEFAULT_DESCRIPTION,
@@ -130,6 +136,7 @@ class Agent(PydanticAgent, ABC):
             Args:
                 query: The question to send to the delegate agent.
             """
+            self.logger.info(f"Agent {self.agent_name} is consulting agent {name}")
             result = await delegate.run(query, usage=ctx.usage)
             return result.output
 
@@ -167,6 +174,7 @@ class Agent(PydanticAgent, ABC):
             if unknown:
                 raise ValueError(f"Unknown delegate(s): {sorted(unknown)}. Available: {delegate_names}")
 
+            self.logger.info(f"Agent {self.agent_name} is consulting agents {agent_names}")
             results = await asyncio.gather(
                 *(delegates[target_name].run(query, usage=ctx.usage) for target_name in targets),
                 return_exceptions=True,

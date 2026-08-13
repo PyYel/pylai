@@ -3,6 +3,8 @@ from typing import Any, Optional
 
 from pydantic_ai import Tool as PydanticTool
 
+from logger import _config_logger
+
 
 class Tool(PydanticTool, ABC):
     """
