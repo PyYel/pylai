@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pylai"
-version = "0.0.1"
+version = "0.0.2"
 description = "AI software engineering library"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,6 +15,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "tqdm",
     "pydantic",
+    "pydantic-ai-slim[openai,mcp]"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -22,12 +23,18 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-all = ["pylai[agentic,langgraph]"]
+all = ["pylai[agentic,api]"]
+# Agentic AI module (built on pydantic-ai)
 agentic = [
-    "pydantic-ai-slim[openai,mcp]",
-    "pylcloud[database] @ https://github.com/PyYel/pylcloud/archive/refs/heads/main.tar.gz",
+    "pylai[graph,orchestrator,rag]",
 ]
-langgraph = [
+graph = ["pylcloud @ https://github.com/PyYel/pylcloud/archive/refs/heads/main.tar.gz"]
+orchestrator = []
+rag = ["pylcloud[elasticsearch,opensearch] @ https://github.com/PyYel/pylcloud/archive/refs/heads/main.tar.gz"]
+# API demo module
+api = [
+    "fastapi",
+    "requests"
 ]
 
 
