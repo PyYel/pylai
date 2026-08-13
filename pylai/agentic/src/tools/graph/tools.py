@@ -74,7 +74,7 @@ class GraphQueryTool(Tool):
             target: Filter edges pointing to this node id.
             limit: Maximum number of matches to return.
         """
-        self.db_client.logger.info("Querying graph database (node_id=%s)", node_id)
+        self.logger.info("Querying graph database (node_id=%s)", node_id)
         result = self.db_client.query_data(
             node_id=node_id,
             labels=labels,
@@ -97,6 +97,7 @@ class GraphQueryTool(Tool):
             ).model_dump()
             for e in result["edges"]
         ]
+        self.logger.debug({"nodes": nodes, "edges": edges})
         return {"nodes": nodes, "edges": edges}
 
 
@@ -117,9 +118,9 @@ class GraphNeighborsTool(Tool):
         Args:
             node_id: The unique identifier of the node to expand.
         """
-        self.db_client.logger.info("Fetching graph neighbors (node_id=%s)", node_id)
+        self.logger.info("Fetching graph neighbors (node_id=%s)", node_id)
         result = self.db_client.query_data(node_id=node_id)
-        return [
+        result = [
             GraphRelationship(
                 source_id=e["source"],
                 target_id=e["target"],
@@ -128,3 +129,6 @@ class GraphNeighborsTool(Tool):
             ).model_dump()
             for e in result["edges"]
         ]
+        self.logger.debug(result)
+        return result
+

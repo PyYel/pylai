@@ -8,6 +8,7 @@ from agentic import cli_local_chatbot, simple_local_chatbot
 from agentic import OrchestratorAgent, GraphAgent
 from pylcloud.database import DatabaseGraphLocal
 
+os.environ["LOGS_LEVEL"] = "DEBUG"
 
 db_client = DatabaseGraphLocal(
     host="tree.ggraph.json"
@@ -17,9 +18,5 @@ graph_agent = GraphAgent(
     db_client=db_client,
     model="bedrock:eu.amazon.nova-micro-v1:0",
 )
-orchestrator_agent = OrchestratorAgent(
-    model="bedrock:eu.amazon.nova-micro-v1:0",
-    delegates=graph_agent
-)
-cli_local_chatbot(agent=orchestrator_agent)
-# simple_local_chatbot(agent=orchestrator_agent)
+
+simple_local_chatbot(agent=graph_agent)

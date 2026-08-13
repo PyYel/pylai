@@ -71,9 +71,15 @@ class Agent(PydanticAgent, ABC):
         self.delegates: Dict[str, "PydanticAgent[Any, Any]"] = self._name_delegates(delegates)
         capabilities: List[Any] = []
         if self.delegates:
+            delegate_tools = [
+                self._build_delegate_tool(delegate_name, delegate)
+                for delegate_name, delegate in self.delegates.items()
+            ]
+            if len(self.delegates) > 1:
+                delegate_tools.append(self._build_multidelegate_tool(self.delegates))
             capabilities.append(Capability(
                 id="delegation",
-                tools=tools,
+                tools=delegate_tools,
                 description=f"Delegates to specialist agents: {', '.join(self.delegates)}.",
             ))
 

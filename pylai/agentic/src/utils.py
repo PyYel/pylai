@@ -43,7 +43,7 @@ def test_mcp_server_sync(url: str, token: str = ""):
     return asyncio.run(test_mcp_server(url, token))
 
 
-def start_local_chatbot(agent: Agent, **cli_kwargs: Any) -> None:
+def cli_local_chatbot(agent: Agent, **cli_kwargs: Any) -> None:
     """Starts a simple interactive CLI chat loop for an agent.
 
     Parameters
@@ -54,3 +54,41 @@ def start_local_chatbot(agent: Agent, **cli_kwargs: Any) -> None:
         Forwarded to ``agent.to_cli_sync`` (e.g. ``message_history=``).
     """
     agent.to_cli_sync(prog_name=agent.name or "pylai-agent", **cli_kwargs)
+
+
+
+def simple_local_chatbot(agent: Agent, **run_kwargs: Any) -> None:
+    """Starts a plain interactive chat loop for an agent, with no Rich/prompt_toolkit involved.
+
+    Parameters
+    ----------
+    agent: Agent
+        The agent to chat with.
+    **run_kwargs: Any
+        Forwarded to every ``agent.run_sync`` call (e.g. ``usage_limits=``).
+    """
+    prog_name = agent.name or "pylai-agent"
+    print(f"=== {prog_name} chat — Type 'exit' or press Ctrl+C to quit ===")
+
+    message_history = None
+    while True:
+        try:
+            user_input = input("You: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nExiting.")
+            break
+
+        if not user_input:
+            continue
+        if user_input.lower() in ("exit", "quit"):
+            print("Exiting.")
+            break
+
+        try:
+            result = agent.run_sync(user_input, message_history=message_history, **run_kwargs)
+        except Exception as e:
+            print(f"[{prog_name}] Error: {type(e).__name__}: {e}\n")
+            continue
+
+        print(f"{prog_name}: {result.output}\n")
+        message_history = result.all_messages()

@@ -25,7 +25,7 @@ class OrchestratorAgent(Agent):
         self,
         model: Union[Model, KnownModelName],
         name: str = "OrchestratorAgent",
-        delegates: Sequence[PydanticAgent] = (),
+        delegates: Union[PydanticAgent, Sequence[PydanticAgent]] = (),
         instructions: Optional[str] = None,
         description: Optional[str] = None,
         **agent_kwargs: Any,
@@ -48,7 +48,7 @@ class OrchestratorAgent(Agent):
         super().__init__(
             model=model,
             name=name,
-            delegates=delegates,
+            delegates=delegates if isinstance(delegates, Sequence) else [delegates],
             instructions=instructions,
             description=description,
             **agent_kwargs,
