@@ -10,7 +10,7 @@ from pydantic_ai.models import KnownModelName, Model
 from abc import ABC
 
 from ..tools import Tool
-from logger import _config_logger
+from pylai.logger import _config_logger
 
 
 class Agent(PydanticAgent, ABC):

@@ -43,7 +43,7 @@ echo %COLOR_GREEN%Package manager installed successfully%COLOR_RESET%
 REM Install package in editable mode
 echo:
 echo %COLOR_BLUE%Installing packages in editable mode...%COLOR_RESET%
-uv pip install -e . --quiet
+pip install ".[all]" --quiet
 if errorlevel 1 (
     echo %COLOR_RED%ERROR: Failed to install package%COLOR_RESET%
     pause

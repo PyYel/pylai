@@ -6,7 +6,7 @@ from pylcloud.database.src.search.DatabaseSearch import DatabaseSearch
 from pylcloud.gpt.src.GPT import GPT
 
 from ..tool import Tool
-from logger import _config_logger
+from pylai.logger import _config_logger
 
 class Document(BaseModel):
     """

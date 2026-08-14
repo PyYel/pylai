@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from pylcloud.database.src.graph.DatabaseGraph import DatabaseGraph
 
 from ..tool import Tool
-from logger import _config_logger
+from pylai.logger import _config_logger
 
 class GraphNode(BaseModel):
     """
