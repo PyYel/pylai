@@ -6,7 +6,6 @@ from pylcloud.database.src.graph.DatabaseGraph import DatabaseGraph
 
 from ..agent import Agent
 from ...tools.graph.tools import GraphNeighborsTool, GraphQueryTool
-import numpy
 
 class GraphAgent(Agent):
     """
