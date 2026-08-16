@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from pycloud.database import DatabaseRelationalPostgreSQL
+from pylcloud.database import DatabaseRelationalPostgreSQL
 from constants import (
     POSTGRES_DATABASE,
     POSTGRES_HOST,
